@@ -48,15 +48,21 @@
 2. Railway Variables 에 `AGENT_READ_TOKEN=<강한 랜덤값>` 추가 → 배포.
 3. 확인: `curl -H "x-agent-token: <TOKEN>" https://<근태관리>/api/agent/stores` → 매장 목록. `/api/agent/employees?store=store_demo` 로 employee id 확인(1-4단계에 사용).
 
-## 3. 에이전트 앱 (Vercel 신규)
-1. 이 모노레포를 GitHub 에 푸시.
-2. Vercel → New Project → 저장소 Import.
-   - **Root Directory: `apps/web`**
-   - Install Command: `npm install --prefix ../..` (또는 Vercel 기본; npm workspaces 자동 감지되면 그대로)
-   - Build Command: `next build` (기본), Output: 기본
-   - 커넥터(TS 소스)는 `transpilePackages` 로 처리됨(설정 완료).
-3. **환경변수 입력**(§환경변수 체크리스트) 후 Deploy.
-4. **Cron**: `apps/web/vercel.json` 의 `0 23 * * *`(UTC = KST 08:00) 가 자동 등록된다. `CRON_SECRET` 을 설정하면 Vercel 이 크론 호출에 `Authorization: Bearer` 를 붙인다.
+## 3. 에이전트 앱 (Vercel)
+- GitHub: **https://github.com/khj873-hub/perfect-ai-manager** (private, 푸시 완료).
+- Vercel 프로젝트: **`perfect-ai-manager`** (id `prj_sFfWq70JAfAa9A2Dm3kgtKAgHyBn`, 팀 khj873-1573s-projects)
+  가 이미 생성돼 있다(Root Directory `apps/web` 지정됨). **같은 이름으로 새로 만들지 말 것.**
+  단, GitHub 저장소 **자동 연결이 실패**했다(Vercel 팀의 GitHub 통합이 이 private 저장소에 접근 권한 없음).
+
+**대표가 대시보드에서 마무리:**
+1. Vercel → 프로젝트 `perfect-ai-manager` → **Settings → Git** → **Connect** `khj873-hub/perfect-ai-manager`.
+   - 요청 시 **Vercel GitHub App 을 khj873-hub 계정/저장소에 인가**(Install & Authorize). 이게 404의 원인.
+2. **Settings → Build & Deployment** 에서 Root Directory = `apps/web` 확인. (transpilePackages 로 커넥터 TS 처리됨)
+3. **Settings → Environment Variables** 에 §환경변수 체크리스트 전부 입력.
+4. **Deploy**(Deployments → Redeploy 또는 main 에 푸시). 이후 main 푸시마다 자동 배포.
+5. **Cron**: `apps/web/vercel.json` 의 `0 23 * * *`(UTC = KST 08:00) 자동 등록. `CRON_SECRET` 설정 시 Vercel 이 크론 호출에 `Authorization: Bearer` 를 붙인다.
+
+> 환경변수 없이 배포해도 빌드는 통과하며 `/chat` 은 fixture 데모(MockLlm)로 동작한다(로그인·실데이터는 env 필요).
 
 ## 4. 스모크 테스트 (완료 기준)
 1. 대표 휴대폰에서 `https://<앱도메인>/login` → 매직링크 로그인 → `/chat` 에서 추천 질문 4개 답변 확인.

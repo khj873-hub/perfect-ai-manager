@@ -1,0 +1,39 @@
+[
+  { "q": "지금 누가 근무 중이야?", "role": "owner", "expect_tools": ["get_today_status"], "expect_in_answer": ["김민지"] },
+  { "q": "오늘 출근한 사람 알려줘", "role": "owner", "expect_tools": ["get_today_status"], "expect_in_answer": ["이서연"] },
+  { "q": "이서연 지금 근무 중이야?", "role": "manager", "expect_tools": ["get_today_status"], "expect_in_answer": ["이서연"] },
+  { "q": "오늘 아직 출근 안 한 사람 있어?", "role": "owner", "expect_tools": ["get_today_status"], "expect_in_answer": ["박준호"] },
+  { "q": "지금 근무 중인 사람 누구누구야?", "role": "manager", "expect_tools": ["get_today_status"], "expect_in_answer": ["김민지"] },
+
+  { "q": "어제 김민지 몇 시에 출근했어?", "role": "owner", "expect_tools": ["get_day_records"], "expect_in_answer": ["09:17"] },
+  { "q": "어제 이서연 퇴근 시각 알려줘", "role": "manager", "expect_tools": ["get_day_records"], "expect_in_answer": ["17:20"] },
+  { "q": "9월 22일 박준호 근무 기록 보여줘", "role": "owner", "expect_tools": ["get_day_records"], "expect_in_answer": ["박준호"] },
+  { "q": "어제 정우진 출근했어?", "role": "manager", "expect_tools": ["get_day_records"], "expect_in_answer": ["정우진"] },
+  { "q": "어제 김민지 근무 기록 알려줘", "role": "owner", "expect_tools": ["get_day_records"], "expect_in_answer": ["김민지"] },
+
+  { "q": "어제 이상 있었어?", "role": "owner", "expect_tools": ["detect_issues"], "expect_in_answer": ["김민지"] },
+  { "q": "어제 문제 있었던 사람 정리해줘", "role": "manager", "expect_tools": ["detect_issues"], "expect_in_answer": ["정우진"] },
+  { "q": "9월 22일 이상 건 정리해줘", "role": "owner", "expect_tools": ["detect_issues"], "expect_in_answer": ["17"] },
+  { "q": "어제 대리 출근 의심 있었어?", "role": "owner", "expect_tools": ["detect_issues"], "expect_in_answer": ["최하늘"] },
+
+  { "q": "이번 주 지각한 사람 누구야?", "role": "owner", "expect_tools": ["get_period_stats"], "expect_in_answer": ["김민지"] },
+  { "q": "이번 달 지각 제일 많은 사람?", "role": "manager", "expect_tools": ["get_period_stats"], "expect_in_answer": ["김민지"] },
+  { "q": "김민지 이번 달 지각 몇 번이야?", "role": "owner", "expect_tools": ["get_period_stats"], "expect_in_answer": ["3"] },
+  { "q": "이번 달 결근한 사람 있어?", "role": "manager", "expect_tools": ["get_period_stats"], "expect_in_answer": ["정우진"] },
+  { "q": "이번 달 조퇴한 사람 알려줘", "role": "owner", "expect_tools": ["get_period_stats"], "expect_in_answer": ["이서연"] },
+
+  { "q": "이번 달 근무시간 알려줘", "role": "owner", "expect_tools": ["get_period_stats"], "expect_in_answer": ["시간"] },
+  { "q": "김민지 이번 달 근무시간 얼마야?", "role": "manager", "expect_tools": ["get_period_stats"], "expect_in_answer": ["김민지"] },
+  { "q": "이번 주 근무시간 많은 사람?", "role": "owner", "expect_tools": ["get_period_stats"], "expect_in_answer": ["시간"] },
+  { "q": "박준호 이번 달 몇 시간 일했어?", "role": "manager", "expect_tools": ["get_period_stats"], "expect_in_answer": ["박준호"] },
+
+  { "q": "김민지 9월 급여 대략 얼마야?", "role": "owner", "expect_tools": ["get_payroll_preview"], "expect_in_answer": ["김민지", "참고"] },
+  { "q": "이번 달 급여 전체 대략 얼마 나와?", "role": "owner", "expect_tools": ["get_payroll_preview"], "expect_in_answer": ["참고"] },
+  { "q": "정우진 9월 급여 계산해줘", "role": "owner", "expect_tools": ["get_payroll_preview"], "expect_in_answer": ["정우진"] },
+
+  { "q": "우리 매장 직원 명단 보여줘", "role": "owner", "expect_tools": ["list_employees"], "expect_in_answer": ["김민지", "박준호"] },
+  { "q": "직원이 누구누구 있어?", "role": "manager", "expect_tools": ["list_employees"], "expect_in_answer": ["정우진"] },
+
+  { "q": "이번 달 급여 얼마 나와?", "role": "manager", "expect_tools": null, "expect_not_in_answer": ["원"] },
+  { "q": "김민지 급여 알려줘", "role": "manager", "expect_tools": null, "expect_not_in_answer": ["원"] }
+]

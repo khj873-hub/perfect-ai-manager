@@ -1,0 +1,15 @@
+{
+  "name": "perfect-ai-manager",
+  "version": "0.1.0",
+  "private": true,
+  "description": "퍼펙트 AI 매니저 — 대화형 근태 에이전트 (모노레포)",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "test": "npm run test --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "build": "npm run build --workspace @perfect-ai-manager/web"
+  }
+}

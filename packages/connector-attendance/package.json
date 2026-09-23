@@ -1,0 +1,19 @@
+{
+  "name": "@perfect-ai-manager/connector-attendance",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "근태 커넥터 — 순수 TS 도메인 로직 + 데이터 소스 어댑터 (프레임워크 무관)",
+  "main": "src/index.ts",
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0",
+    "vitest": "^3.2.0"
+  }
+}

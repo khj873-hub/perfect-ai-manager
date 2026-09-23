@@ -77,31 +77,39 @@ alter table briefings     enable row level security;
 alter table default_schedules enable row level security;
 
 -- 본인 프로필만 조회 (역할·store_ids 는 서버가 service_role 로 심는다)
+drop policy if exists agent_users_self_select on agent_users;
 create policy agent_users_self_select on agent_users
   for select using (id = auth.uid());
 
 -- 대화: 본인 것만 CRUD
+drop policy if exists conversations_own on conversations;
 create policy conversations_own on conversations
   for all using (user_id = auth.uid()) with check (user_id = auth.uid());
 
 -- 메시지: 본인 대화의 메시지만
+drop policy if exists messages_own on messages;
 create policy messages_own on messages
   for all using (conversation_id in (select id from conversations where user_id = auth.uid()))
   with check (conversation_id in (select id from conversations where user_id = auth.uid()));
 
 -- 감사 로그: 본인 것 읽기만 허용, 쓰기는 service_role(RLS 우회)만
+drop policy if exists tool_calls_own_select on tool_calls;
 create policy tool_calls_own_select on tool_calls
   for select using (user_id = auth.uid());
 
--- 매장 설정·브리핑: 소속 매장만 읽기, 쓰기는 service_role 만
+-- 매장 설정·브리핑·기본근무표: 소속 매장만 읽기, 쓰기는 service_role 만.
+-- store_ids 는 text[] 이므로 exists + = any(배열) 형태로 검사한다(스칼라 = 배열 타입오류 방지).
+drop policy if exists store_settings_member_select on store_settings;
 create policy store_settings_member_select on store_settings
-  for select using (store_id = any (select store_ids from agent_users where id = auth.uid()));
+  for select using (exists (select 1 from agent_users u where u.id = auth.uid() and store_settings.store_id = any (u.store_ids)));
 
+drop policy if exists briefings_member_select on briefings;
 create policy briefings_member_select on briefings
-  for select using (store_id = any (select store_ids from agent_users where id = auth.uid()));
+  for select using (exists (select 1 from agent_users u where u.id = auth.uid() and briefings.store_id = any (u.store_ids)));
 
+drop policy if exists default_schedules_member_select on default_schedules;
 create policy default_schedules_member_select on default_schedules
-  for select using (store_id = any (select store_ids from agent_users where id = auth.uid()));
+  for select using (exists (select 1 from agent_users u where u.id = auth.uid() and default_schedules.store_id = any (u.store_ids)));
 
 -- 참고: service_role 키로 접근하면 RLS 를 우회하므로 tool_calls/briefings/store_settings 쓰기와
 -- 브리핑 크론 삽입, agent_users 온보딩(대표 수동 등록)은 모두 서버에서 처리한다(§5·§6).

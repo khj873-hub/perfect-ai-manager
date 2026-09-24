@@ -71,6 +71,17 @@ describe("get_today_status", () => {
     expect(minji.check_in).toBe("08:56");
     expect(r.employees.find((e) => e.name === "박준호")!.status).toBe("예정");
   });
+
+  it("근무표(shift) 없어도 실제 출근자는 근무중으로 보인다 (shift 필터 회귀 방지)", async () => {
+    const db = createFixtureDb(NOW);
+    db.shifts = []; // 근무표 미등록 매장 재현 (default_schedules 없음)
+    const r = await call<{ employees: TodayRow[] }>("get_today_status", owner, {}, createAttendanceConnector(stub(db)));
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    const minji = r.employees.find((e) => e.name === "김민지");
+    expect(minji?.status).toBe("근무중"); // 스케줄 없어도 출근 펀치로 근무중 판정
+    expect(minji?.scheduled).toBeNull();
+  });
 });
 
 describe("get_day_records", () => {

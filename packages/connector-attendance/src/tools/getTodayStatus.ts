@@ -22,8 +22,10 @@ export async function getTodayStatus(
   const s = resolveStore(ctx, input.store_id);
   if (isErr(s)) return s;
   const db = await source.load(s.store_id);
+  // 스케줄(shift)이 있거나, 실제 출근(check_in)한 직원을 모두 포함한다.
+  // (근무표 미등록 매장에서도 실제 출근자가 "근무중"으로 보이도록 — shift만 필터하면 누락됨)
   const employees: TodayRow[] = recordsForDate(db, ctx.today)
-    .filter((r) => r.shift)
+    .filter((r) => r.shift || r.checkIn)
     .map((r) => ({
       name: employeeName(db, r.employeeId),
       scheduled: r.shift ? `${r.shift.start}-${r.shift.end}` : null,

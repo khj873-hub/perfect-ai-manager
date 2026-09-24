@@ -34,11 +34,20 @@ export class MockLlm implements Llm {
   constructor(private today: string) {}
 
   async next(_system: string, msgs: Msg[], tools: BoundTool[]): Promise<LlmTurn> {
-    const question = firstUserText(msgs);
-    const lastTool = [...msgs].reverse().find((m) => m.role === "tool") as
+    // 현재 턴만 본다: 마지막 user 메시지 이후 범위. (멀티턴 채팅에서 이전 질문·도구 결과가 섞이지 않게)
+    let lastUserIdx = -1;
+    for (let i = msgs.length - 1; i >= 0; i--) {
+      if (msgs[i].role === "user") {
+        lastUserIdx = i;
+        break;
+      }
+    }
+    const question = lastUserIdx >= 0 ? (msgs[lastUserIdx] as Extract<Msg, { role: "user" }>).text : "";
+    const turnMsgs = lastUserIdx >= 0 ? msgs.slice(lastUserIdx) : msgs;
+    const lastTool = [...turnMsgs].reverse().find((m) => m.role === "tool") as
       | Extract<Msg, { role: "tool" }>
       | undefined;
-    const alreadyRan = msgs.some((m) => m.role === "tool");
+    const alreadyRan = turnMsgs.some((m) => m.role === "tool");
 
     if (!alreadyRan) {
       const pick = this.pickTool(question);
@@ -208,11 +217,6 @@ function stripStoreId(schema: Record<string, unknown>): Record<string, unknown> 
   if (props && "store_id" in props) delete props.store_id;
   if (Array.isArray(schema.required)) schema.required = (schema.required as string[]).filter((r) => r !== "store_id");
   return schema;
-}
-
-function firstUserText(msgs: Msg[]): string {
-  const u = msgs.find((m) => m.role === "user") as Extract<Msg, { role: "user" }> | undefined;
-  return u?.text ?? "";
 }
 
 export function makeLlm(today: string): Llm {

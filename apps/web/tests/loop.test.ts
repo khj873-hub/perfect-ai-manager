@@ -44,6 +44,22 @@ describe("추천 질문 4개 (§8 chips)", () => {
   });
 });
 
+describe("멀티턴 대화 (같은 채팅창에서 이어 묻기)", () => {
+  it("2번째 질문은 이전 질문/도구 결과에 끌려가지 않고 새로 라우팅한다", async () => {
+    // 1턴: 오늘 현황
+    const t1 = await runAgentTurn("지금 누가 근무 중이야?", [], deps());
+    expect(t1.toolCalls[0].tool).toBe("get_today_status");
+    // 2턴: 앞 대화(history)를 그대로 넘겨도 detect_issues 로 가야 한다 (과거 firstUserText 버그 회귀 방지)
+    const t2 = await runAgentTurn("어제 이상 있었어?", t1.messages, deps());
+    expect(t2.toolCalls[0].tool).toBe("detect_issues");
+    expect(t2.text).not.toContain("근무 중");
+    // 3턴: 기간 통계로 이어져야 한다
+    const t3 = await runAgentTurn("이번 달 근무시간 알려줘", t2.messages, deps());
+    expect(t3.toolCalls[0].tool).toBe("get_period_stats");
+    expect(t3.text).toContain("시간");
+  });
+});
+
 describe("가드·권한", () => {
   it("manager 가 급여를 물으면 급여 도구가 없어 금액을 노출하지 않는다", async () => {
     const r = await runAgentTurn("이번 달 급여 얼마야?", [], deps("manager"));

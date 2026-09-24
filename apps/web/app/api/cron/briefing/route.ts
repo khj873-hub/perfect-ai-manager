@@ -19,14 +19,20 @@ async function handle(req: NextRequest): Promise<Response> {
   const today = kstParts(source.now()).date;
   const stores = await briefingStores();
 
+  // 매장별로 격리 처리: 한 매장이 실패해도(예: 읽기 API 오류) 나머지는 계속 진행한다.
   const generated = [];
+  const errors: { store_id: string; error: string }[] = [];
   for (const store of stores) {
-    const b = await buildBriefing(store, source, today);
-    const p = await persistBriefing(b); // Supabase 미설정이면 no-op
-    generated.push({ store_id: b.store_id, work_date: b.work_date, issues: b.issues.length, persisted: p.persisted, messages: p.messages, body: b.body });
+    try {
+      const b = await buildBriefing(store, source, today);
+      const p = await persistBriefing(b); // Supabase 미설정이면 no-op
+      generated.push({ store_id: b.store_id, work_date: b.work_date, issues: b.issues.length, persisted: p.persisted, messages: p.messages, body: b.body });
+    } catch (e) {
+      errors.push({ store_id: store, error: (e as Error)?.message ?? String(e) });
+    }
   }
 
-  return Response.json({ ok: true, count: generated.length, generated });
+  return Response.json({ ok: errors.length === 0, count: generated.length, generated, errors });
 }
 
 // Vercel Cron 은 GET 으로 호출. 수동 트리거도 GET/POST 모두 허용.

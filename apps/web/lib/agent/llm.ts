@@ -161,7 +161,7 @@ export class AnthropicLlm implements Llm {
   name = "anthropic";
   private model: string;
   constructor(model?: string) {
-    this.model = model || process.env.ANTHROPIC_MODEL || "claude-sonnet-4-5";
+    this.model = model || process.env.ANTHROPIC_MODEL || "claude-haiku-4-5";
   }
 
   async next(system: string, msgs: Msg[], tools: BoundTool[]): Promise<LlmTurn> {

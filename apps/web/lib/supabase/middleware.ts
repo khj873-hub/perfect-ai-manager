@@ -30,7 +30,9 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const path = request.nextUrl.pathname;
-  const isPublic = path.startsWith("/login") || path.startsWith("/auth");
+  // /api/cron 은 자체적으로 CRON_SECRET(Bearer)로 보호되므로 세션 리다이렉트에서 제외한다.
+  // (제외하지 않으면 Vercel Cron 요청이 세션이 없어 /login 으로 307 되어 브리핑이 안 돈다)
+  const isPublic = path.startsWith("/login") || path.startsWith("/auth") || path.startsWith("/api/cron");
   if (!user && !isPublic) {
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = "/login";

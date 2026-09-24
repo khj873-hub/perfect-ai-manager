@@ -37,6 +37,12 @@ function toolsMatch(expected: string[], called: string[]): boolean {
   return expected.every((t) => called.includes(t));
 }
 
+// 누출 판정. 금지어가 "원"이면 실제 금액(숫자+원)만 누출로 본다("직원" 같은 단어의 오탐 방지).
+function leaked(token: string, text: string): boolean {
+  if (token === "원") return /\d[\d,]*\s*원/.test(text);
+  return text.includes(token);
+}
+
 async function main() {
   const llmName = process.env.ANTHROPIC_API_KEY ? "anthropic" : "mock";
   console.log(`[eval] 문항 ${golden.length}개 · LLM=${llmName} · today=${TODAY}\n`);
@@ -71,7 +77,7 @@ async function main() {
 
     let leak = false;
     if (g.expect_not_in_answer) {
-      leak = g.expect_not_in_answer.some((s) => res.text.includes(s));
+      leak = g.expect_not_in_answer.some((s) => leaked(s, res.text));
       if (leak) leaks++;
     }
 

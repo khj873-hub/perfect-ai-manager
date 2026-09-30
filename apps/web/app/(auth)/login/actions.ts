@@ -24,7 +24,8 @@ export async function sendCode(email: string): Promise<{ ok: boolean; message: s
 export async function verifyCode(email: string, code: string): Promise<{ ok: false; message: string } | void> {
   const e = email.trim();
   const token = code.trim();
-  if (!/^\d{6}$/.test(token)) return { ok: false, message: "6자리 숫자 코드를 입력하세요." };
+  // Supabase OTP 길이 설정(6~10)에 상관없이 허용
+  if (!/^\d{6,10}$/.test(token)) return { ok: false, message: "이메일로 온 인증 코드를 입력하세요." };
   const supabase = await createClient();
   const { error } = await supabase.auth.verifyOtp({ email: e, token, type: "email" });
   if (error) return { ok: false, message: "코드가 올바르지 않거나 만료됐어요. 다시 받아주세요." };

@@ -41,7 +41,7 @@ export default function LoginPage() {
       <h1>퍼펙트 AI 매니저 로그인</h1>
       {step === "email" ? (
         <>
-          <p className="muted">가입된 이메일로 6자리 로그인 코드를 보내드립니다.</p>
+          <p className="muted">가입된 이메일로 로그인 코드를 보내드립니다.</p>
           <form onSubmit={onSend} style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 12 }}>
             <input type="email" name="email" placeholder="you@example.com" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
             <button type="submit" disabled={busy}>
@@ -52,15 +52,15 @@ export default function LoginPage() {
       ) : (
         <>
           <p className="muted">
-            <b>{email}</b> 으로 보낸 6자리 코드를 입력하세요.
+            <b>{email}</b> 으로 보낸 인증 코드를 입력하세요.
           </p>
           <form onSubmit={onVerify} style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 12 }}>
             <input
               type="text"
               inputMode="numeric"
               autoComplete="one-time-code"
-              maxLength={6}
-              placeholder="123456"
+              maxLength={10}
+              placeholder="인증 코드"
               value={code}
               onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
               style={{ letterSpacing: "0.3em", fontSize: 20, textAlign: "center" }}

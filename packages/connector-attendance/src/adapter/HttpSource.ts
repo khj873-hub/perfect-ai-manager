@@ -18,7 +18,7 @@ import type { StoreSettings } from "./PostgresSource";
 
 export type FetchLike = (
   url: string,
-  init?: { headers?: Record<string, string> },
+  init?: { headers?: Record<string, string>; cache?: "no-store" | "force-cache"; next?: { revalidate?: number } },
 ) => Promise<{ ok: boolean; status: number; json: () => Promise<unknown> }>;
 
 export interface HttpSourceOptions {
@@ -46,8 +46,11 @@ export function createHttpSource(opts: HttpSourceOptions): AttendanceSource {
   const base = opts.baseUrl.replace(/\/$/, "");
 
   async function getJson(pathAndQuery: string): Promise<Row[]> {
+    // 항상 실시간 조회. 캐시되면 퇴근·새 출근 등 최신 변경이 반영되지 않음(Next/Vercel fetch 캐시 방지).
     const res = await doFetch(`${base}${pathAndQuery}`, {
       headers: opts.token ? { "x-agent-token": opts.token } : {},
+      cache: "no-store",
+      next: { revalidate: 0 },
     });
     if (!res.ok) throw new Error(`근태관리 API ${pathAndQuery} 실패: HTTP ${res.status}`);
     const data = await res.json();

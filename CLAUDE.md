@@ -67,3 +67,46 @@
 - 도메인은 아직 MVP의 `Db` 형태를 입력으로 받는다. §4의 "detect 를 AttendanceSource 배열로" 리팩터링은 **작업 #4**(PostgresSource 도입 시) — 지금 미리 바꾸지 말 것.
 - `permissions.ts` 는 FixtureSource 가 `defaultPermissions()` 를 쓰기 때문에 domain 에 함께 이식했다. 최종 위치는 M1 `apps/web/lib/agent/guard.ts`(§4) — M1에서 옮긴다.
 - 이식하지 않은 것(다음 세션): `ask.ts`(→ 도구), `agent.ts`(→ M1 loop.ts), `store.ts`·UI·발송함(버림), `apps/web`, `supabase/`. 이들에 의존하던 MVP 테스트 블록은 해당 작업에서 도구 단위 테스트로 재구성한다(§12 작업 #2·#5).
+
+## 2026-10-22 — 채팅 장애 복구 + 근태관리 재연결 (작업 #4 완료, #9 부분)
+
+**증상**: 채팅에서 무엇을 물어도 "오류가 났어요." → 런타임 로그에
+`근태관리 API /api/agent/employees?store=xacyqf 실패: HTTP 404`.
+
+**원인 연쇄**(근태관리 쪽에서 시작됐다):
+1. 09-24 근태관리에 읽기 API(`server/src/routes/agent.ts`, PR #25)를 머지했는데,
+2. 10-16 근태관리를 Railway+SQLite → **Vercel+Supabase Postgres** 로 이전할 때
+   그 커밋을 못 받은 로컬 main 에서 작업·배포 → **배포본에 agent.ts 가 없었다**.
+3. 구 Railway 도 내려가(플랫폼 장애 + 도메인 해제) 양쪽 다 404.
+
+**조치**:
+- 근태관리: `origin/main` 머지로 `agent.ts` 회수 + **Postgres 어댑터에 맞게 포팅**
+  (`db` 직접 import, 모든 `.all()` 에 `await`). 응답 계약은 그대로라 `HttpSource` 무수정.
+- 근태관리에서 **Postgres boolean 버그 3+9곳** 추가 발견·수정(아래 "주의" 참고).
+- 데이터는 복구하지 않고 **새 매장으로 재구성**(대표 결정). 구 `xacyqf` 는 버린다.
+- 이 저장소: `app/api/chat/route.ts` 에 try/catch — 커넥터·LLM 장애가 500 으로 새지 않고
+  503 + 읽을 수 있는 안내로 나간다. 채팅 화면은 응답 본문이 있으면 그대로 표시.
+
+**현재 연결 상태(운영)**:
+
+| 항목 | 값 |
+|---|---|
+| 근태관리 | `https://perfect-work.vercel.app` (Vercel + Supabase Postgres) |
+| 매장 slug | **`k35321`** (AI 매니저 테스트 매장) — 구 `xacyqf` 폐기 |
+| 직원 | 김민지 12,000 / 박준호 11,500 / 이서연 10,500 |
+| 근태관리 env | `AGENT_READ_TOKEN`, `AGENT_STORE_SLUG=k35321` |
+| 이 앱 env | `ATTENDANCE_SOURCE=http`, `ATTENDANCE_API_URL`, `ATTENDANCE_API_TOKEN`(토큰 동일) |
+| 에이전트 DB | `agent_users.store_ids=['k35321']`, `store_settings` 에 k35321 행 |
+
+**검증(운영 실측)**: "지금 누가 근무 중?" → *"현재(18:48 기준) 근무 중인 직원은 김민지(18:29 출근)
+입니다. 박준호는 방금 퇴근했습니다."* — 실제 입력과 일치. "이번 달 근무시간" → 스케줄 없음을
+밝히고 대안 제시(= `schedule_unavailable` 폴백 정상).
+
+### 주의 — 다음에 또 밟기 쉬운 것
+- **환경변수를 바꾸면 반드시 재배포**해야 서버리스에 반영된다(`vercel redeploy <배포URL>`).
+- **근태관리 env 변경 시 토큰 양쪽을 같이** 바꿔야 한다(`AGENT_READ_TOKEN` ↔ `ATTENDANCE_API_TOKEN`).
+- 근태관리는 이제 **Postgres** 다. SQLite 시절 코드를 가져올 때 `await` 누락과
+  **boolean 컬럼에 0/1**(SQL 문자열 리터럴 포함)을 반드시 확인할 것.
+- 매장 slug 는 근태관리가 자동 생성한다(지정 불가). slug 가 바뀌면 **에이전트 DB
+  `agent_users.store_ids`·`store_settings.store_id` 도 같이** 바꿔야 한다(안 하면 403).
+- 지각·결근 통계를 쓰려면 `default_schedules` 에 기본 근무표를 넣어야 한다(아직 미등록).

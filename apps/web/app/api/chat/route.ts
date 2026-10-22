@@ -23,7 +23,23 @@ export async function POST(req: NextRequest) {
   const system = systemPrompt(profile.storeIds[0] ?? "매장", ctx.today);
   const llm = makeLlm(ctx.today);
 
-  const result = await runAgentTurn(message, history, { llm, tools, ctx, system });
+  // 커넥터(근태관리 API)·LLM 장애가 그대로 500 이 되면 화면엔 "오류가 났어요."만 남아
+  // 원인을 알 수 없다. 여기서 잡아 사람이 읽을 수 있는 안내로 바꾸고, 원문은 로그에 남긴다.
+  let result: Awaited<ReturnType<typeof runAgentTurn>>;
+  try {
+    result = await runAgentTurn(message, history, { llm, tools, ctx, system });
+  } catch (e) {
+    const detail = e instanceof Error ? e.message : String(e);
+    console.error("[chat] 에이전트 턴 실패:", detail);
+    const isAttendance = detail.includes("근태관리 API");
+    const msg = isAttendance
+      ? "지금 퍼펙트근태관리에서 자료를 못 가져오고 있어요. 잠시 뒤 다시 물어봐 주세요. (관리자: 근태관리 읽기 API 연결을 확인해 주세요)"
+      : "지금 답을 만들지 못했어요. 잠시 뒤 다시 물어봐 주세요.";
+    return new Response(msg, {
+      status: 503,
+      headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "no-store" },
+    });
+  }
   // TODO(작업 #8 전): Supabase 설정 시 messages/tool_calls 영속화. 로컬은 생략.
 
   const asOf = kstParts().time; // "HH:mm"

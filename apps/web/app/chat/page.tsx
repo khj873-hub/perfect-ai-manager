@@ -26,7 +26,10 @@ export default function ChatPage() {
       });
       const asOf = res.headers.get("x-as-of") ?? undefined;
       if (!res.ok || !res.body) {
-        setMsgs((m) => patchLast(m, res.status === 401 ? "로그인이 필요해요." : "오류가 났어요.", asOf));
+        // 서버가 사람이 읽을 안내를 본문으로 내려주면 그대로 보여준다(예: 근태관리 연결 장애).
+        const body = await res.text().catch(() => "");
+        const fallback = res.status === 401 ? "로그인이 필요해요." : "오류가 났어요.";
+        setMsgs((m) => patchLast(m, body.trim() || fallback, asOf));
         return;
       }
       const reader = res.body.getReader();
